@@ -11,11 +11,14 @@
     pages/MyComponent/Element.module.css
     pages/MyComponent/index.ts (опционально)
 """
-from abc import abstractmethod, ABC
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, TypeAlias, Iterable
+from ElementClass import Element
+from FileCreator import FileCreator
 
+from TSViewModelCreator import TSViewModelCreator
+from TSXCreator import TSXFileCreator
+from IndexCreator import IndexFileCreator
 
 SRC_DIR = Path(__file__).parent / "react"
 
@@ -34,70 +37,6 @@ class Colors:
     UNDERLINE = '\033[4m'
 
 
-@dataclass
-class Element:
-    full_path: Path
-    name: str
-
-
-class FileCreator(ABC):
-    def __init__(self, element: Element):
-        self._element = element
-
-    def create(self) -> None:
-        """Creates empty file and then fill with contents"""
-        self._create_empty_file()
-        self._write_file_contents()
-
-    def get_relative_filename(self) -> str:
-        """Returns relative filename as str for logging"""
-        relative_path_start_index = 1 + len(str(SRC_DIR.resolve()))
-        result = str(
-            self.get_absolute_filename().resolve()
-        )[relative_path_start_index:]
-        return result
-
-    def _create_empty_file(self):
-        """Init file if not exists"""
-        self.get_absolute_filename().parent.mkdir(parents=True, exist_ok=True)
-        self.get_absolute_filename().touch(exist_ok=True)
-
-    @abstractmethod
-    def get_absolute_filename(self) -> Path:
-        """Returns file in Path format"""
-        pass
-
-    @abstractmethod
-    def _write_file_contents(self) -> None:
-        """Fill file with contents"""
-        pass
-
-
-class TSXFileCreator(FileCreator):
-    """Element.tsx file creator"""
-    def get_absolute_filename(self) -> Path:
-        return self._element.full_path / (self._element.name + ".tsx")
-
-    def _write_file_contents(self):
-        self.get_absolute_filename().write_text(
-            f"""import React from "react"
-interface {self._element.name}Props {{
-  
-}}
-const {self._element.name} = ({{}}: {self._element.name}Props) => (
-  <div>{self._element.name}</div>
-)
-export default {self._element.name}
-        """.strip())
-
-class TSModuleFileCreator(FileCreator):
-    """Element.css file creator"""
-    def get_absolute_filename(self) -> Path:
-        return self._element.full_path / (self._element.name + ".ts")
-
-    def _write_file_contents(self):
-        pass
-
 # class CSSFileCreator(FileCreator):
 #     """Element.module.css file creator"""
 #     def get_absolute_filename(self) -> Path:
@@ -107,34 +46,20 @@ class TSModuleFileCreator(FileCreator):
 #         pass
 
 
-class IndexFileCreator(FileCreator):
-    """Optional index.ts file creator"""
-    def get_absolute_filename(self) -> Path:
-        return self._element.full_path / "index.ts"
-
-    def _write_file_contents(self):
-        current_file_contents = self.get_absolute_filename().read_text()
-        if current_file_contents.strip():
-            return
-        self.get_absolute_filename().write_text(
-            f"""export {{default}} from "./{self._element.name}";"""
-        )
-
-
 class AskParams:
     """Ask params from user, parse it and create Element structure"""
     def __init__(self):
         self._element: Element
 
-    def ask(self, folder) -> Element:
+    def ask(self, folder, name) -> Element:
         """Ask all parameters — element folder and name"""
-
         # base_folder = self._ask_base_folder()
+        # self._element = self._parse_as_element(
+        #     self._ask_element(base_folder),
+        #     base_folder
+        # )
         base_folder = folder
-        self._element = self._parse_as_element(
-            self._ask_element(base_folder),
-            base_folder
-        )
+        self._element = self._parse_as_element(name, base_folder)
         return self._element
 
     def _parse_as_element(self,
@@ -199,18 +124,18 @@ class ElementFilesCreator:
 
 def main():
     asker = AskParams()
+    component = input(f"Название компонента? ").strip().lower()
     for folder in ['view', 'domain', 'service']:
-      element = asker.ask(folder)
-      print(element)
+      element = asker.ask(folder, component)
       element_creator = ElementFilesCreator(element)
       if folder == 'view':
         element_creator.register_file_creators(
             TSXFileCreator,
             # CSSFileCreator,
-            IndexFileCreator
+            IndexFileCreator,
+            TSViewModelCreator
         )
       element_creator.register_file_creators(
-            TSModuleFileCreator,
             # CSSFileCreator,
             IndexFileCreator
         )
