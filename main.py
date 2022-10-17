@@ -13,10 +13,14 @@
         react/domain/MyComponent/index.ts
 """
 from pathlib import Path
-from typing import Literal, TypeAlias, Iterable
+from typing import Literal, TypeAlias
 from ElementClass import Element
 from FileCreator import FileCreator
 
+from ApiHelperCreator import ApiHelperCreator
+from ISettingsCreator import ISettingsCreator
+from SettingsCreator import SettingsCreator
+from SettingsFactoryCreator import SettingsFactoryCreator
 from TSViewModelCreator import TSViewModelCreator
 from TSXCreator import TSXFileCreator
 from TSServiceCreator import TSServiceCreator
@@ -91,20 +95,26 @@ def main():
       
       if folder == 'view':
         element_creator.register_file_creators(
-            IndexFileCreator,
             TSXFileCreator,
-            TSViewModelCreator
+            TSViewModelCreator,
+            IndexFileCreator,
         )
 
       if folder == 'service':
         element_creator.register_file_creators(
-            IndexFileCreator, 
             TSServiceCreator,
-            IServiceCreator
+            IServiceCreator,
+            ApiHelperCreator,
+            IndexFileCreator, 
         )
 
       if folder == 'domain':
-        element_creator.register_file_creators(IndexFileCreator)
+        element_creator.register_file_creators(
+            SettingsCreator,
+            ISettingsCreator,
+            SettingsFactoryCreator,
+            IndexFileCreator,
+        )
 
       element_creator.create()
     print(f"{Colors.OKGREEN}Всё создал и весь такой молодец!")
