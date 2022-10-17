@@ -11,8 +11,9 @@ class IndexFileCreator(FileCreator):
     def _write_file_contents(self):
         current_file_contents = self.get_absolute_filename().read_text()
         if current_file_contents.strip():
+            print('⛔   файлы уже существуют, ничего не создал ' + str(self._element.full_path))
             return
-        print(self._element.full_path)
+        print('✔️   создал ' + str(self._element.full_path))
         if 'view' in str(self._element.full_path):
             self.get_absolute_filename().write_text(ViewIndex(self._element.name))
         if 'service' in str(self._element.full_path):
