@@ -29,23 +29,37 @@
 
 from pathlib import Path
 from typing import Literal, TypeAlias
+from Creator import Creator
 from ElementClass import Element
 from FileCreator import FileCreator
 
-from ApiHelperCreator import ApiHelperCreator
-from ISettingsCreator import ISettingsCreator
-from SettingsCreator import SettingsCreator
-from SettingsFactoryCreator import SettingsFactoryCreator
-from TSViewModelCreator import TSViewModelCreator
-from TSXCreator import TSXFileCreator
-from TSServiceCreator import TSServiceCreator
-from IServiceCreator import IServiceCreator
-from IndexCreator import IndexFileCreator
+from templates.main import TSX, ApiHelper, DomainIndex, IService, ISettings, Service, ServiceIndex, Settings, SettingsFactory, Urls, ViewIndex, ViewModel
+
 
 SRC_DIR = Path(__file__).parent / "react"
 
 BaseFolder: TypeAlias = Literal["domain", "service", "view"]
 
+FolderOptions = {
+    'view': [
+        {'option_folder': '', 'callback': TSX, 'ending_file': '.tsx', 'start_file': ''},
+        {'option_folder': '', 'callback': ViewModel, 'ending_file': 'ViewModel.ts', 'start_file': ''},
+        {'option_folder': '', 'callback': ViewIndex, 'ending_file': 'index.ts', 'start_file': ''},
+    ],
+    'service': [
+        {'option_folder': '', 'callback': Service, 'ending_file': 'Service.ts', 'start_file': ''},
+        {'option_folder': '', 'callback': IService, 'ending_file': 'Service.ts', 'start_file': 'I'},
+        {'option_folder': '../apiHelper', 'callback': ApiHelper, 'ending_file': 'Api.ts', 'start_file': ''},
+        {'option_folder': '../apiHelper/urls', 'callback': Urls, 'ending_file': 'Urls.ts', 'start_file': ''},
+        {'option_folder': '', 'callback': ServiceIndex, 'ending_file': 'index.ts', 'start_file': ''},
+    ],
+    'domain': [
+        {'option_folder': '', 'callback': Settings, 'ending_file': 'Settings.ts', 'start_file': ''},
+        {'option_folder': '', 'callback': ISettings, 'ending_file': 'Settings.ts', 'start_file': 'I'},
+        {'option_folder': '', 'callback': SettingsFactory, 'ending_file': 'SettingsFactory.ts', 'start_file': ''},
+        {'option_folder': '', 'callback': DomainIndex, 'ending_file': 'index.ts', 'start_file': ''},
+    ],
+}
 class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -58,12 +72,10 @@ class Colors:
     UNDERLINE = '\033[4m'
 
 class AskParams:
-    """Ask params from user, parse it and create Element structure"""
     def __init__(self):
         self._element: Element
 
     def ask(self, folder, name) -> Element:
-        """Ask all parameters — element folder and name"""
         base_folder = folder
         self._element = self._parse_as_element(name, base_folder)
         return self._element
@@ -83,7 +95,6 @@ class AskParams:
         )
 
 class ElementFilesCreator:
-    """Handles files creation"""
     def __init__(self, element: Element):
         self._element = element
         self._file_creators: list[FileCreator] = []
@@ -92,10 +103,14 @@ class ElementFilesCreator:
         for file_creator in self._file_creators:
             file_creator.create()
 
-    def register_file_creators(self, *file_creators: type[FileCreator]):
-        for fc in file_creators:
-            self._file_creators.append(fc(
-                element=self._element
+    def register_file_creators(self, options: type[FileCreator]):
+        for option in options:
+            self._file_creators.append(Creator(
+                element=self._element,                  # Подготовленный элемент под создание файла
+                option_folder=option['option_folder'],  # Опциональный каталог
+                ending_file=option['ending_file'],      # Окончание в названии файла
+                start_file=option['start_file'],        # Приставка в названии файла
+                callback=option['callback'],            # Функция с шаблоном внутреннего кода файла
             ))
 
     def get_relative_filenames(self) -> tuple[str, ...]:
@@ -104,36 +119,16 @@ class ElementFilesCreator:
 def main():
     asker = AskParams()
     component = input(f"{Colors.OKBLUE}Название компонента:   {Colors.HEADER}").strip().lower()
-    for folder in ['view', 'domain', 'service']:
-      element = asker.ask(folder, component)
-      element_creator = ElementFilesCreator(element)
-      
-      if folder == 'view':
-        element_creator.register_file_creators(
-            TSXFileCreator,
-            TSViewModelCreator,
-            IndexFileCreator,
-        )
-
-      if folder == 'service':
-        element_creator.register_file_creators(
-            TSServiceCreator,
-            IServiceCreator,
-            ApiHelperCreator,
-            IndexFileCreator, 
-        )
-
-      if folder == 'domain':
-        element_creator.register_file_creators(
-            SettingsCreator,
-            ISettingsCreator,
-            SettingsFactoryCreator,
-            IndexFileCreator,
-        )
-
-      element_creator.create()
+    for folder, options in FolderOptions.items():
+        # Записать введенное название компонента и название каталога folder
+        element = asker.ask(folder, component)
+        # Создать элемент для будущего файла
+        element_creator = ElementFilesCreator(element)
+        # Собрать все опции по файлу через options
+        element_creator.register_file_creators(options)
+        # Создать файл
+        element_creator.create()
     print(f"{Colors.OKGREEN}Всё создал и весь такой молодец!")
-
 
 if __name__ == "__main__":
     try:

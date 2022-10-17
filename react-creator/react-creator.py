@@ -26,148 +26,16 @@
             но только пока по первому знаку из введенного названия.
             Например reboot -> Reboot
 """
-from dataclasses import dataclass
+
+
+from abc import abstractmethod, ABC
 from pathlib import Path
 from typing import Literal, TypeAlias
-from abc import abstractmethod, ABC
+from dataclasses import dataclass
 
 SRC_DIR = Path(__file__).parent / "react"
 
 BaseFolder: TypeAlias = Literal["domain", "service", "view"]
-
-class Colors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-
-@dataclass
-class Element:
-    full_path: Path
-    name: str
-
-SRC_DIR = Path(__file__).parent / "react"
-
-class FileCreator(ABC):
-    def __init__(self, element: Element):
-        self._element = element
-
-    def create(self) -> None:
-        """Creates empty file and then fill with contents"""
-        self._create_empty_file()
-        self._write_file_contents()
-
-    def get_relative_filename(self) -> str:
-        """Returns relative filename as str for logging"""
-        relative_path_start_index = 1 + len(str(SRC_DIR.resolve()))
-        result = str(
-            self.get_absolute_filename().resolve()
-        )[relative_path_start_index:]
-        return result
-
-    def _create_empty_file(self):
-        """Init file if not exists"""
-        self.get_absolute_filename().parent.mkdir(parents=True, exist_ok=True)
-        self.get_absolute_filename().touch(exist_ok=True)
-
-    @abstractmethod
-    def get_absolute_filename(self) -> Path:
-        """Returns file in Path format"""
-        pass
-
-    @abstractmethod
-    def _write_file_contents(self) -> None:
-        """Fill file with contents"""
-        pass
-
-
-class IndexFileCreator(FileCreator):
-    """Optional index.ts file creator"""
-    def get_absolute_filename(self) -> Path:
-        return self._element.full_path / "index.ts"
-
-    def _write_file_contents(self):
-        current_file_contents = self.get_absolute_filename().read_text()
-        if current_file_contents.strip():
-            print('⛔   файлы уже существуют, ничего не создал ' + str(self._element.full_path))
-            return
-        print('✔️   создал ' + str(self._element.full_path))
-        if 'view' in str(self._element.full_path):
-            self.get_absolute_filename().write_text(ViewIndex(self._element.name))
-        if 'service' in str(self._element.full_path):
-            self.get_absolute_filename().write_text(ServiceIndex(self._element.name))
-        if 'domain' in str(self._element.full_path):
-            self.get_absolute_filename().write_text(DomainIndex(self._element.name))
-
-
-class IServiceCreator(FileCreator):
-    """IService file creator"""
-    def get_absolute_filename(self) -> Path:
-        return self._element.full_path / ("I" + self._element.name.capitalize() + "Service.ts")
-
-    def _write_file_contents(self):
-        self.get_absolute_filename().write_text(IService(self._element.name).strip(), encoding='utf-8')
-
-
-class ISettingsCreator(FileCreator):
-    """ISettings file creator"""
-    def get_absolute_filename(self) -> Path:
-        return self._element.full_path / ("I" + self._element.name.capitalize() + "Settings.ts")
-
-    def _write_file_contents(self):
-        self.get_absolute_filename().write_text(ISettings(self._element.name).strip(), encoding='utf-8')
-
-
-class SettingsCreator(FileCreator):
-    """Settings file creator"""
-    def get_absolute_filename(self) -> Path:
-        return self._element.full_path / (self._element.name.capitalize() + "Settings.ts")
-
-    def _write_file_contents(self):
-        self.get_absolute_filename().write_text(Settings(self._element.name).strip(), encoding='utf-8')
-
-
-class SettingsFactoryCreator(FileCreator):
-    """SettingsFactory file creator"""
-    def get_absolute_filename(self) -> Path:
-        return self._element.full_path / (self._element.name.capitalize() + "SettingsFactory.ts")
-
-    def _write_file_contents(self):
-        self.get_absolute_filename().write_text(SettingsFactory(self._element.name).strip(), encoding='utf-8')
-
-
-class TSServiceCreator(FileCreator):
-    """Service file creator"""
-    def get_absolute_filename(self) -> Path:
-        return self._element.full_path / (self._element.name.capitalize() + "Service.ts")
-
-    def _write_file_contents(self):
-        self.get_absolute_filename().write_text(Service(self._element.name).strip(), encoding='utf-8')
-
-
-class TSViewModelCreator(FileCreator):
-    """Element.css file creator"""
-    def get_absolute_filename(self) -> Path:
-        return self._element.full_path / (self._element.name.capitalize() + "ViewModel.ts")
-
-    def _write_file_contents(self):
-        self.get_absolute_filename().write_text(ViewModel(self._element.name).strip(), encoding='utf-8')
-
-
-class TSXFileCreator(FileCreator):
-    """Element.tsx file creator"""
-    def get_absolute_filename(self) -> Path:
-        return self._element.full_path / (self._element.name.capitalize() + ".tsx")
-
-    def _write_file_contents(self):
-        self.get_absolute_filename().write_text(TSX(self._element.name).strip(), encoding='utf-8')
-
 
 def ApiHelper(name):
     nameCapitalize = name.capitalize()
@@ -343,27 +211,114 @@ export class {name.capitalize()}ViewModel extends ViewModel {{
     @observable isAdmin: boolean = this.app.getMainView().getViewModel().get().isAdmin;
 
     /** Инициализация ViewModel */
-    onInit() {{}}
+    protected onInit() {{}}
 
     @Inject('{name}Service') {name}Service: {name.capitalize()}Service;
 }}
 """
 
-class ApiHelperCreator(FileCreator):
-    """ApiHelper file creator"""
+def Urls(name):
+    return f"""
+export default {{
+    {name}: cgi_rest_service_url ? cgi_rest_service_url + '' : '/services/'
+}}
+"""
+
+FolderOptions = {
+    'view': [
+        {'option_folder': '', 'callback': TSX, 'ending_file': '.tsx', 'start_file': ''},
+        {'option_folder': '', 'callback': ViewModel, 'ending_file': 'ViewModel.ts', 'start_file': ''},
+        {'option_folder': '', 'callback': ViewIndex, 'ending_file': 'index.ts', 'start_file': ''},
+    ],
+    'service': [
+        {'option_folder': '', 'callback': Service, 'ending_file': 'Service.ts', 'start_file': ''},
+        {'option_folder': '', 'callback': IService, 'ending_file': 'Service.ts', 'start_file': 'I'},
+        {'option_folder': '../apiHelper', 'callback': ApiHelper, 'ending_file': 'Api.ts', 'start_file': ''},
+        {'option_folder': '../apiHelper/urls', 'callback': Urls, 'ending_file': 'Urls.ts', 'start_file': ''},
+        {'option_folder': '', 'callback': ServiceIndex, 'ending_file': 'index.ts', 'start_file': ''},
+    ],
+    'domain': [
+        {'option_folder': '', 'callback': Settings, 'ending_file': 'Settings.ts', 'start_file': ''},
+        {'option_folder': '', 'callback': ISettings, 'ending_file': 'Settings.ts', 'start_file': 'I'},
+        {'option_folder': '', 'callback': SettingsFactory, 'ending_file': 'SettingsFactory.ts', 'start_file': ''},
+        {'option_folder': '', 'callback': DomainIndex, 'ending_file': 'index.ts', 'start_file': ''},
+    ],
+}
+class Colors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+SRC_DIR = Path(__file__).parent / "react"
+
+@dataclass
+class Element:
+    full_path: Path
+    name: str
+
+class FileCreator(ABC):
+    def __init__(self, element: Element, option_folder='', ending_file='', start_file='', callback=lambda name:name):
+        self._element = element
+        self._option_folder = option_folder
+        self._ending_file = ending_file
+        self._start_file = start_file
+        self._callback = callback
+
+    def create(self) -> None:
+        """Creates empty file and then fill with contents"""
+        self._create_empty_file()
+        self._write_file_contents()
+
+    def get_relative_filename(self) -> str:
+        """Returns relative filename as str for logging"""
+        relative_path_start_index = 1 + len(str(SRC_DIR.resolve()))
+        result = str(
+            self.get_absolute_filename().resolve()
+        )[relative_path_start_index:]
+        return result
+
+    def _create_empty_file(self):
+        """Init file if not exists"""
+        self.get_absolute_filename().parent.mkdir(parents=True, exist_ok=True)
+        self.get_absolute_filename().touch(exist_ok=True)
+
+    @abstractmethod
     def get_absolute_filename(self) -> Path:
-        return self._element.full_path / "../apiHelper" /(self._element.name.capitalize() + "Api.ts")
+        """Returns file in Path format"""
+        pass
+
+    @abstractmethod
+    def _write_file_contents(self) -> None:
+        """Fill file with contents"""
+        pass
+
+
+class Creator(FileCreator):
+    def get_absolute_filename(self) -> Path:
+        if self._ending_file == 'index.ts':
+           return self._element.full_path / self._option_folder / self._ending_file
+        return self._element.full_path / self._option_folder / (self._start_file + self._element.name.capitalize() + self._ending_file)
 
     def _write_file_contents(self):
-        self.get_absolute_filename().write_text(ApiHelper(self._element.name).strip(), encoding='utf-8')
+        current_file_contents = self.get_absolute_filename().read_text()
+        if current_file_contents.strip():
+            print('⛔ файл уже существуют, ничего не создал ' + str(self.get_absolute_filename()))
+            return
+        print('✔️ создал ' + str(self.get_absolute_filename()))
+        self.get_absolute_filename().write_text(self._callback(self._element.name))
 
 class AskParams:
-    """Ask params from user, parse it and create Element structure"""
     def __init__(self):
         self._element: Element
 
     def ask(self, folder, name) -> Element:
-        """Ask all parameters — element folder and name"""
         base_folder = folder
         self._element = self._parse_as_element(name, base_folder)
         return self._element
@@ -383,7 +338,6 @@ class AskParams:
         )
 
 class ElementFilesCreator:
-    """Handles files creation"""
     def __init__(self, element: Element):
         self._element = element
         self._file_creators: list[FileCreator] = []
@@ -392,48 +346,33 @@ class ElementFilesCreator:
         for file_creator in self._file_creators:
             file_creator.create()
 
-    def register_file_creators(self, *file_creators: type[FileCreator]):
-        for fc in file_creators:
-            self._file_creators.append(fc(
-                element=self._element
+    def register_file_creators(self, options: type[FileCreator]):
+        for option in options:
+            self._file_creators.append(Creator(
+                element=self._element,                  # Подготовленный элемент под создание файла
+                option_folder=option['option_folder'],  # Опциональный каталог
+                ending_file=option['ending_file'],      # Окончание в названии файла
+                start_file=option['start_file'],        # Приставка в названии файла
+                callback=option['callback'],            # Функция с шаблоном внутреннего кода файла
             ))
 
     def get_relative_filenames(self) -> tuple[str, ...]:
         return tuple(fc.get_relative_filename() for fc in self._file_creators)
 
+
 def main():
     asker = AskParams()
     component = input(f"{Colors.OKBLUE}Название компонента:   {Colors.HEADER}").strip().lower()
-    for folder in ['view', 'domain', 'service']:
-      element = asker.ask(folder, component)
-      element_creator = ElementFilesCreator(element)
-      
-      if folder == 'view':
-        element_creator.register_file_creators(
-            TSXFileCreator,
-            TSViewModelCreator,
-            IndexFileCreator,
-        )
-
-      if folder == 'service':
-        element_creator.register_file_creators(
-            TSServiceCreator,
-            IServiceCreator,
-            ApiHelperCreator,
-            IndexFileCreator, 
-        )
-
-      if folder == 'domain':
-        element_creator.register_file_creators(
-            SettingsCreator,
-            ISettingsCreator,
-            SettingsFactoryCreator,
-            IndexFileCreator,
-        )
-
-      element_creator.create()
+    for folder, options in FolderOptions.items():
+        # Записать введенное название компонента и название каталога folder
+        element = asker.ask(folder, component)
+        # Создать элемент для будущего файла
+        element_creator = ElementFilesCreator(element)
+        # Собрать все опции по файлу через options
+        element_creator.register_file_creators(options)
+        # Создать файл
+        element_creator.create()
     print(f"{Colors.OKGREEN}Всё создал и весь такой молодец!")
-
 
 if __name__ == "__main__":
     try:

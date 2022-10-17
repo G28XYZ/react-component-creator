@@ -5,8 +5,12 @@ from ElementClass import Element
 SRC_DIR = Path(__file__).parent / "react"
 
 class FileCreator(ABC):
-    def __init__(self, element: Element):
+    def __init__(self, element: Element, option_folder='', ending_file='', start_file='', callback=lambda name:name):
         self._element = element
+        self._option_folder = option_folder
+        self._ending_file = ending_file
+        self._start_file = start_file
+        self._callback = callback
 
     def create(self) -> None:
         """Creates empty file and then fill with contents"""
