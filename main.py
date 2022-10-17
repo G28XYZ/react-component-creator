@@ -7,11 +7,26 @@
         react/view/MyComponent/MyComponent.tsx
         react/view/MyComponent/MyComponentViewModel.ts
     - service
+        react/service/MyComponent/apiHelper/MyComponentApi.ts
         react/service/MyComponent/index.ts
         react/service/MyComponent/MyComponentService.ts
+        react/service/MyComponent/IMyComponentService.ts
     - domain
         react/domain/MyComponent/index.ts
+        react/domain/MyComponent/MyComponentSettings.ts
+        react/domain/MyComponent/IMyComponentSettings.ts
+        react/domain/MyComponent/MyComponentSettingsFactory.ts
+
+для запуска скрипта перейди в папку c компонентом в котором нужно создать/добавить папку react с компонентами
+например: webgui_frontend_app_react\packages\local\SystemSettings
+закинь туда файл react-creator.py
+в консоли запусти его командой: python -B react-creator.py
+
+Примечание: нейминг компонента будет создан в CamelCase,
+            но только пока по первому знаку из введенного названия.
+            Например reboot -> Reboot
 """
+
 from pathlib import Path
 from typing import Literal, TypeAlias
 from ElementClass import Element

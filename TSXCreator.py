@@ -8,4 +8,4 @@ class TSXFileCreator(FileCreator):
         return self._element.full_path / (self._element.name.capitalize() + ".tsx")
 
     def _write_file_contents(self):
-        self.get_absolute_filename().write_text(TSX(self._element.name).strip())
+        self.get_absolute_filename().write_text(TSX(self._element.name).strip(), encoding='utf-8')
