@@ -13,4 +13,4 @@ class Creator(FileCreator):
             print('⛔ файл уже существуют, ничего не создал ' + str(self.get_absolute_filename()))
             return
         print('✔️ создал ' + str(self.get_absolute_filename()))
-        self.get_absolute_filename().write_text(self._callback(self._element.name))
+        self.get_absolute_filename().write_text(self._callback(self._element.name), encoding='utf-8')

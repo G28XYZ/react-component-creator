@@ -18,7 +18,7 @@
         react/domain/MyComponent/MyComponentSettingsFactory.ts
 
 для запуска скрипта перейди в папку c компонентом в котором нужно создать/добавить папку react с компонентами
-например: webgui_frontend_app_react\packages\local\SystemSettings
+например: webgui_frontend_app_react/packages/local/SystemSettings
 закинь туда файл react-creator.py
 в консоли запусти его командой: python -B react-creator.py
 
@@ -82,7 +82,7 @@ def ISettings(name):
     return f"""
 import {{ IModel }} from "@itcs/react-mvvm"
 
-/** Интерфейс настроек журналов **/
+/** Интерфейс настроек **/
 export interface I{nameCapitalize}Settings extends IModel {{
 }}
 """
@@ -312,7 +312,7 @@ class Creator(FileCreator):
             print('⛔ файл уже существуют, ничего не создал ' + str(self.get_absolute_filename()))
             return
         print('✔️ создал ' + str(self.get_absolute_filename()))
-        self.get_absolute_filename().write_text(self._callback(self._element.name))
+        self.get_absolute_filename().write_text(self._callback(self._element.name), encoding='utf-8')
 
 class AskParams:
     def __init__(self):
@@ -346,7 +346,7 @@ class ElementFilesCreator:
         for file_creator in self._file_creators:
             file_creator.create()
 
-    def register_file_creators(self, options: type[FileCreator]):
+    def register_file_creators(self, options):
         for option in options:
             self._file_creators.append(Creator(
                 element=self._element,                  # Подготовленный элемент под создание файла

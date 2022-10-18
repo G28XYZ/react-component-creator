@@ -18,7 +18,7 @@
         react/domain/MyComponent/MyComponentSettingsFactory.ts
 
 для запуска скрипта перейди в папку c компонентом в котором нужно создать/добавить папку react с компонентами
-например: webgui_frontend_app_react\packages\local\SystemSettings
+например: webgui_frontend_app_react/packages/local/SystemSettings
 закинь туда файл react-creator.py
 в консоли запусти его командой: python -B react-creator.py
 
@@ -103,7 +103,7 @@ class ElementFilesCreator:
         for file_creator in self._file_creators:
             file_creator.create()
 
-    def register_file_creators(self, options: type[FileCreator]):
+    def register_file_creators(self, options):
         for option in options:
             self._file_creators.append(Creator(
                 element=self._element,                  # Подготовленный элемент под создание файла

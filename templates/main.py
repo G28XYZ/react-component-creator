@@ -43,7 +43,7 @@ def ISettings(name):
     return f"""
 import {{ IModel }} from "@itcs/react-mvvm"
 
-/** Интерфейс настроек журналов **/
+/** Интерфейс настроек **/
 export interface I{nameCapitalize}Settings extends IModel {{
 }}
 """
