@@ -77,7 +77,7 @@ export class {nameCapitalize}Service implements I{nameCapitalize}Service {{
         }}
     }}
 
-    @Inject('{name}Api') {name}Api: {nameCapitalize}Api;
+    @Inject('{nameCapitalize}Api') {name}Api: {nameCapitalize}Api;
     @Inject("{nameCapitalize}SettingsFactory")
     private {name}SettingsFactory: {nameCapitalize}SettingsFactory;
 }}
@@ -164,7 +164,7 @@ import {{ Inject, Service }} from 'typedi';
 import {{ ViewModel }} from '@itcs/react-mvvm';
 import {{ {name.capitalize()}Service }} from '../../service/{name}/{name.capitalize()}Service';
 
-@Service('{name}ViewModel')
+@Service('{name.capitalize()}ViewModel')
 export class {name.capitalize()}ViewModel extends ViewModel {{
     /** Глобальный объект App */
     app = (window.globalThis as any).App
@@ -174,7 +174,7 @@ export class {name.capitalize()}ViewModel extends ViewModel {{
     /** Инициализация ViewModel */
     protected onInit() {{}}
 
-    @Inject('{name}Service') {name}Service: {name.capitalize()}Service;
+    @Inject('{name.capitalize()}Service') {name}Service: {name.capitalize()}Service;
 }}
 """
 
